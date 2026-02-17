@@ -83,13 +83,15 @@ MATRIX_USER_ID=@mybot:your-homeserver.org
 
 | Variable | Required | Default | Description |
 |---|---|---|---|
-| `MATRIX_HOMESERVER_URL` | yes | | Homeserver URL the bot connects to |
+| `MATRIX_HOMESERVER_URL` | yes | | Homeserver **API** URL (see note below) |
 | `MATRIX_ACCESS_TOKEN` | yes | | Access token from login |
 | `MATRIX_USER_ID` | yes | | Full Matrix user ID (`@user:server`) |
 | `MATRIX_DEVICE_ID` | no | (auto) | Managed by crypto store; rarely needed |
 | `BOT_PREFIX` | no | `!` | Command prefix |
 | `BOT_DATA_DIR` | no | `./data` | Directory for all persistent data |
 | `BOT_LOG_LEVEL` | no | `info` | `debug`, `info`, `warn`, or `error` |
+
+> **Homeserver URL:** This must be the actual Matrix API URL, not your domain. The SDK does not perform `.well-known` discovery. To find it, check `https://your-domain/.well-known/matrix/client` -- the `m.homeserver.base_url` field is what you need. For example, if your Matrix ID is `@bot:example.org`, the homeserver URL might be `https://matrix.example.org`.
 
 ### 4. Invite the bot
 
@@ -98,12 +100,17 @@ Invite the bot user to a room. It will auto-join. The bot supports encrypted roo
 ## Running
 
 ```bash
+# First time: install deps and native crypto module
+deno task setup
+
 # Development (auto-reload on changes)
 deno task dev
 
 # Production
 deno task start
 ```
+
+> **Note:** `deno task setup` runs `deno install` with `--allow-scripts` to build the native crypto module (`@matrix-org/matrix-sdk-crypto-nodejs`). You only need to run it once, or again after changing `deno.json`.
 
 ## Docker
 

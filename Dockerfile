@@ -1,12 +1,12 @@
-FROM denoland/deno:2.1.4
+FROM denoland/deno:2.6.10
 
 WORKDIR /app
 
 # Copy dependency files first to leverage Docker cache
 COPY deno.json deno.lock* ./
 
-# Cache dependencies
-RUN deno install
+# Install deps and run native postinstall scripts (for crypto module)
+RUN deno install --allow-scripts=npm:@matrix-org/matrix-sdk-crypto-nodejs@0.4.0
 
 # Copy source code
 COPY . .
@@ -19,6 +19,4 @@ VOLUME /data
 
 ENV BOT_DATA_DIR=/data
 
-EXPOSE 8080
-
-CMD ["deno", "run", "--allow-net", "--allow-env", "--allow-read", "--allow-write", "main.ts"]
+CMD ["deno", "run", "--allow-all", "--env-file", "main.ts"]

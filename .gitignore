@@ -4,6 +4,7 @@
 *.symcache
 .env
 /data/
+/node_modules/
 
 /.cargo_home/
 /.idea/

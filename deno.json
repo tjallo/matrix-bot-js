@@ -1,7 +1,9 @@
 {
+  "nodeModulesDir": "auto",
   "tasks": {
-    "dev": "deno run --watch --allow-net --allow-env --allow-read --allow-write main.ts",
-    "start": "deno run --allow-net --allow-env --allow-read --allow-write main.ts",
+    "setup": "deno install --allow-scripts=npm:@matrix-org/matrix-sdk-crypto-nodejs@0.4.0",
+    "dev": "deno run --watch --allow-all --env-file main.ts",
+    "start": "deno run --allow-all --env-file main.ts",
     "test": "deno test --allow-all",
     "test:unit": "deno test tests/unit --allow-all",
     "test:feature": "deno test tests/feature --allow-all",
