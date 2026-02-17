@@ -179,7 +179,7 @@ docker run -d \
 The `/data` volume persists:
 - `crypto/` -- E2EE device keys (SQLite). **Back this up.** If lost, you need a new access token.
 - `matrix-bot.json` -- SDK sync state.
-- `bot-store.json` -- Bot data (command stats, settings).
+- `bot-store.json` -- Bot data (command stats, feature suggestions, settings).
 
 ## Commands
 
@@ -193,11 +193,13 @@ Default prefix: `!`
 | `!time` | Server time (ISO 8601) |
 | `!uptime` | Bot uptime |
 | `!roll [NdM]` | Dice roll (default 1d6, max 100d1000) |
-| `!whoami` | Shows caller and bot user info |
+| `!whoami` | Shows your user ID and bot version |
 | `!roominfo` | Room name, ID, member count, encryption status |
 | `!encryptstatus` | Whether room encryption is enabled |
+| `!suggest <idea>` | Suggest a feature (persisted with your user ID) |
+| `!suggestions` | List all feature suggestions |
 | `!stats` | Command usage statistics |
-| `!version` | Deno/V8/TypeScript versions |
+| `!version` | Bot, Deno, V8, TypeScript versions |
 
 ## Encryption
 

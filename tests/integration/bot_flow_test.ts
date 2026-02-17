@@ -179,3 +179,30 @@ Deno.test("integration: multiple rooms are independent", async () => {
   assertEquals(client.sent[1].roomId, "!room2:test");
   assertEquals(client.sent[1].text, "hi");
 });
+
+Deno.test("integration: suggest and list suggestions end-to-end", async () => {
+  const { client, bot } = setup();
+
+  // Suggest from two users
+  await bot.handleMessage(
+    "!room:test",
+    makeTextEvent("@alice:matrix.test", "!suggest Add weather command"),
+  );
+  assertStringIncludes(client.lastSentText()!, "#1");
+
+  await bot.handleMessage(
+    "!room:test",
+    makeTextEvent("@bob:matrix.test", "!suggest Add reminder feature"),
+  );
+  assertStringIncludes(client.lastSentText()!, "#2");
+
+  // List suggestions
+  await bot.handleMessage(
+    "!room:test",
+    makeTextEvent("@alice:matrix.test", "!suggestions"),
+  );
+  const text = client.lastSentText()!;
+  assertStringIncludes(text, "Suggestions (2):");
+  assertStringIncludes(text, "[@alice:matrix.test] Add weather command");
+  assertStringIncludes(text, "[@bob:matrix.test] Add reminder feature");
+});

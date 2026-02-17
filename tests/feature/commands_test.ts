@@ -254,3 +254,93 @@ Deno.test("version: includes bot and Deno version", async () => {
   assertStringIncludes(text, "Bot:");
   assertStringIncludes(text, `Deno: ${Deno.version.deno}`);
 });
+
+// -----------------------------------------------------------------------
+// !suggest
+// -----------------------------------------------------------------------
+
+Deno.test("suggest: records a suggestion", async () => {
+  const storage = new MemoryStorage();
+  const ctx = makeCtx({
+    storage,
+    rawArgs: "Add a weather command",
+    args: ["Add", "a", "weather", "command"],
+    sender: "@alice:matrix.test",
+  });
+  const def = ctx.registry.get("suggest")!;
+  await def.handler(ctx);
+  const text = (ctx.client as MockMatrixClient).lastSentText()!;
+  assertStringIncludes(text, "#1");
+  assertStringIncludes(text, "Thanks!");
+});
+
+Deno.test("suggest: shows usage when no text provided", async () => {
+  const ctx = makeCtx({ rawArgs: "", args: [] });
+  const def = ctx.registry.get("suggest")!;
+  await def.handler(ctx);
+  assertStringIncludes(
+    (ctx.client as MockMatrixClient).lastSentText()!,
+    "Usage:",
+  );
+});
+
+Deno.test("suggest: increments IDs", async () => {
+  const storage = new MemoryStorage();
+  const ctx1 = makeCtx({
+    storage,
+    rawArgs: "First idea",
+    args: ["First", "idea"],
+  });
+  const ctx2 = makeCtx({
+    storage,
+    rawArgs: "Second idea",
+    args: ["Second", "idea"],
+  });
+  await ctx1.registry.get("suggest")!.handler(ctx1);
+  await ctx2.registry.get("suggest")!.handler(ctx2);
+  assertStringIncludes((ctx1.client as MockMatrixClient).lastSentText()!, "#1");
+  assertStringIncludes((ctx2.client as MockMatrixClient).lastSentText()!, "#2");
+});
+
+// -----------------------------------------------------------------------
+// !suggestions
+// -----------------------------------------------------------------------
+
+Deno.test("suggestions: shows empty message when none exist", async () => {
+  const ctx = makeCtx();
+  const def = ctx.registry.get("suggestions")!;
+  await def.handler(ctx);
+  assertStringIncludes(
+    (ctx.client as MockMatrixClient).lastSentText()!,
+    "No suggestions yet",
+  );
+});
+
+Deno.test("suggestions: lists suggestions with sender", async () => {
+  const storage = new MemoryStorage();
+
+  // Add two suggestions from different users
+  const ctx1 = makeCtx({
+    storage,
+    rawArgs: "Dark mode",
+    args: ["Dark", "mode"],
+    sender: "@alice:matrix.test",
+  });
+  await ctx1.registry.get("suggest")!.handler(ctx1);
+
+  const ctx2 = makeCtx({
+    storage,
+    rawArgs: "Reminder feature",
+    args: ["Reminder", "feature"],
+    sender: "@bob:matrix.test",
+  });
+  await ctx2.registry.get("suggest")!.handler(ctx2);
+
+  // List them
+  const ctx3 = makeCtx({ storage });
+  await ctx3.registry.get("suggestions")!.handler(ctx3);
+  const text = (ctx3.client as MockMatrixClient).lastSentText()!;
+  assertStringIncludes(text, "Suggestions (2):");
+  assertStringIncludes(text, "#1 [@alice:matrix.test] Dark mode");
+  assertStringIncludes(text, "#2 [@bob:matrix.test] Reminder feature");
+});
