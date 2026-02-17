@@ -130,13 +130,14 @@ Deno.test("roll: shows usage for invalid spec", async () => {
 // !whoami
 // -----------------------------------------------------------------------
 
-Deno.test("whoami: shows sender and bot user", async () => {
+Deno.test("whoami: shows sender ID only", async () => {
   const ctx = makeCtx();
   const def = ctx.registry.get("whoami")!;
   await def.handler(ctx);
   const text = (ctx.client as MockMatrixClient).lastSentText()!;
   assertStringIncludes(text, "@user:matrix.test");
-  assertStringIncludes(text, "@bot:matrix.test");
+  assertEquals(text.includes("@bot:matrix.test"), false);
+  assertEquals(text.includes("Device ID"), false);
 });
 
 // -----------------------------------------------------------------------

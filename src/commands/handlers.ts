@@ -146,12 +146,9 @@ export function createCommandRegistry(): CommandRegistry {
     name: "whoami",
     summary: "Show your Matrix user ID",
     handler: async (ctx: CommandContext) => {
-      const device = ctx.config.deviceId
-        ? `Device ID: ${ctx.config.deviceId}`
-        : "Device ID: (not configured)";
       await ctx.client.sendText(
         ctx.roomId,
-        `You are ${ctx.sender}\nBot user: ${ctx.config.userId}\n${device}`,
+        `You are ${ctx.sender}`,
       );
     },
   });
