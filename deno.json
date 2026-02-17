@@ -1,9 +1,16 @@
 {
   "tasks": {
-    "dev": "deno run --watch main.ts"
+    "dev": "deno run --watch --allow-net --allow-env --allow-read --allow-write main.ts",
+    "start": "deno run --allow-net --allow-env --allow-read --allow-write main.ts",
+    "test": "deno test --allow-all",
+    "test:unit": "deno test tests/unit --allow-all",
+    "test:feature": "deno test tests/feature --allow-all",
+    "test:integration": "deno test tests/integration --allow-all",
+    "lint": "deno lint"
   },
   "imports": {
-    "": "npm:matrix-bot-sdk@^0.8.0",
-    "@std/assert": "jsr:@std/assert@1"
+    "matrix-bot-sdk": "npm:matrix-bot-sdk@^0.8.0",
+    "@std/assert": "jsr:@std/assert@1",
+    "@std/path": "jsr:@std/path@1"
   }
 }
