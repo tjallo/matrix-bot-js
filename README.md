@@ -116,20 +116,24 @@ deno task start
 
 ### Production
 
-Uses `docker-compose.yml`. Builds the image, runs the bot with a named volume for persistent data, and restarts automatically.
+Uses `docker-compose.yml` with the latest release image from GHCR.
 
 ```bash
 # Start
 docker compose up -d
 
-# Watch mode -- auto-rebuilds and restarts the container when source files change
-docker compose watch
+# Update to latest release
+docker compose pull && docker compose up -d
 
 # Stop
 docker compose down
 ```
 
-`docker compose watch` monitors `main.ts`, `src/`, `deno.json`, and `deno.lock`. When any of these change it rebuilds the image and restarts the container. Data in `/data` is preserved across rebuilds.
+To pin a specific version instead of `latest`, edit `docker-compose.yml`:
+
+```yaml
+image: ghcr.io/tjallo/matrix-bot-js:0.1.0
+```
 
 ### Development
 
@@ -151,11 +155,18 @@ docker compose -f docker-compose.dev.yml run --rm test
 
 Log level defaults to `debug` in dev mode.
 
-### Standalone Docker (no compose)
+### Standalone Docker
 
 ```bash
-docker build -t matrix-bot .
+# From GHCR
+docker run -d \
+  --name matrix-bot \
+  -v $(pwd)/data:/data \
+  --env-file .env \
+  ghcr.io/tjallo/matrix-bot-js:latest
 
+# Or build locally
+docker build -t matrix-bot .
 docker run -d \
   --name matrix-bot \
   -v $(pwd)/data:/data \
