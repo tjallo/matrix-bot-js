@@ -22,18 +22,78 @@ function isOtkConflict(err: unknown): boolean {
 }
 
 /**
- * Remove the local crypto store so the SDK generates fresh keys
- * on the next start.
+ * Try to delete the current device from the server so Synapse forgets
+ * its stale one-time keys. We try the Synapse admin API first (no UIA
+ * required), then fall back to the client API with empty auth.
  */
-async function wipeCryptoStore(config: BotConfig): Promise<void> {
-  console.warn(`Wiping crypto store at ${config.cryptoDir} ...`);
+async function deleteDeviceOnServer(
+  client: MatrixClient,
+  userId: string,
+): Promise<void> {
+  let deviceId: string | undefined;
+  try {
+    const whoami = await client.getWhoAmI();
+    deviceId = whoami.device_id;
+  } catch {
+    console.warn("Could not determine device ID from /whoami, skipping device deletion.");
+    return;
+  }
+  if (!deviceId) return;
+
+  console.warn(`Attempting to delete device ${deviceId} from server...`);
+
+  // Try Synapse admin API first (works when the bot user is a server admin).
+  try {
+    await client.doRequest(
+      "DELETE",
+      `/_synapse/admin/v2/users/${encodeURIComponent(userId)}/devices/${encodeURIComponent(deviceId)}`,
+    );
+    console.warn(`Device ${deviceId} deleted via Synapse admin API.`);
+    return;
+  } catch {
+    console.warn("Synapse admin API device deletion failed, trying client API...");
+  }
+
+  // Fall back to the client API with empty auth body (works on some setups).
+  try {
+    await client.doRequest(
+      "DELETE",
+      `/_matrix/client/v3/devices/${encodeURIComponent(deviceId)}`,
+      null,
+      { auth: {} },
+    );
+    console.warn(`Device ${deviceId} deleted via client API.`);
+  } catch {
+    console.warn(
+      `Could not delete device ${deviceId} from server. ` +
+      "You may need to delete it manually via Synapse admin or Element.",
+    );
+  }
+}
+
+/**
+ * Remove all local state (crypto store + Matrix sync state) so the SDK
+ * registers a fresh device with new keys on the next start.
+ */
+async function wipeLocalState(config: BotConfig): Promise<void> {
+  console.warn("Wiping local state (crypto store + matrix state)...");
+
+  // Wipe crypto store directory
   try {
     await Deno.remove(config.cryptoDir, { recursive: true });
   } catch (e) {
     if (!(e instanceof Deno.errors.NotFound)) throw e;
   }
   await Deno.mkdir(config.cryptoDir, { recursive: true });
-  console.warn("Crypto store wiped.");
+
+  // Wipe matrix SDK state file so the cached device ID is forgotten
+  try {
+    await Deno.remove(config.matrixStatePath);
+  } catch (e) {
+    if (!(e instanceof Deno.errors.NotFound)) throw e;
+  }
+
+  console.warn("Local state wiped.");
 }
 
 function wireEvents(
@@ -101,9 +161,12 @@ async function main(): Promise<void> {
     console.warn(
       "One-time key conflict detected — local crypto store is out of sync with homeserver.",
     );
-    await wipeCryptoStore(config);
 
-    // Recreate client with a fresh crypto store and retry once.
+    // Delete the stale device from the server so its old keys are purged,
+    // then wipe all local state and retry with a completely fresh device.
+    await deleteDeviceOnServer(client, config.userId);
+    await wipeLocalState(config);
+
     client = createMatrixClient(config);
     bot = createBot({ client, storage, config });
     wireEvents(client, bot);
