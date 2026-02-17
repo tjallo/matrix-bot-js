@@ -2,6 +2,7 @@ import { CommandRegistry } from "./registry.ts";
 import type { CommandContext } from "./types.ts";
 import { formatDurationMs } from "../services/format.ts";
 import { getStats } from "../services/stats.ts";
+import { addSuggestion, getSuggestions } from "../services/suggestions.ts";
 import { VERSION } from "../version.ts";
 
 type DiceSpec = {
@@ -220,6 +221,54 @@ export function createCommandRegistry(): CommandRegistry {
       await ctx.client.sendText(
         ctx.roomId,
         `Commands run: ${stats.totalCommands}\nLast command: ${stats.lastCommandAt ?? "n/a"}\nTop: ${top || "n/a"}`,
+      );
+    },
+  });
+
+  registry.register({
+    name: "suggest",
+    summary: "Suggest a feature for the bot",
+    usage: "suggest <your idea>",
+    handler: async (ctx: CommandContext) => {
+      if (!ctx.rawArgs) {
+        await ctx.client.sendText(
+          ctx.roomId,
+          `Usage: ${ctx.config.prefix}suggest <your idea>`,
+        );
+        return;
+      }
+      const suggestion = await addSuggestion(
+        ctx.storage,
+        ctx.rawArgs,
+        ctx.sender,
+        ctx.roomId,
+        ctx.now,
+      );
+      await ctx.client.sendText(
+        ctx.roomId,
+        `Suggestion #${suggestion.id} recorded. Thanks!`,
+      );
+    },
+  });
+
+  registry.register({
+    name: "suggestions",
+    summary: "List feature suggestions",
+    handler: async (ctx: CommandContext) => {
+      const items = await getSuggestions(ctx.storage);
+      if (items.length === 0) {
+        await ctx.client.sendText(
+          ctx.roomId,
+          `No suggestions yet. Use ${ctx.config.prefix}suggest <idea> to add one.`,
+        );
+        return;
+      }
+      const lines = items.map((s: { id: number; sender: string; text: string }) =>
+        `#${s.id} [${s.sender}] ${s.text}`
+      );
+      await ctx.client.sendText(
+        ctx.roomId,
+        `Suggestions (${items.length}):\n${lines.join("\n")}`,
       );
     },
   });

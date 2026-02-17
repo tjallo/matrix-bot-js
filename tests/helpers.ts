@@ -13,24 +13,24 @@ export class MockMatrixClient implements MatrixClientLike {
   roomStateEvents: Map<string, Record<string, unknown>> = new Map();
   roomState: Map<string, Record<string, unknown>[]> = new Map();
 
-  async sendText(roomId: string, text: string): Promise<string> {
+  sendText(roomId: string, text: string): Promise<string> {
     this.sent.push({ roomId, text });
-    return `$fake_event_${this.sent.length}`;
+    return Promise.resolve(`$fake_event_${this.sent.length}`);
   }
 
-  async getRoomStateEvent(
+  getRoomStateEvent(
     roomId: string,
     eventType: string,
     _stateKey: string,
   ): Promise<Record<string, unknown>> {
     const key = `${roomId}::${eventType}`;
     const event = this.roomStateEvents.get(key);
-    if (!event) throw new Error(`State event not found: ${key}`);
-    return event;
+    if (!event) return Promise.reject(new Error(`State event not found: ${key}`));
+    return Promise.resolve(event);
   }
 
-  async getRoomState(roomId: string): Promise<Record<string, unknown>[]> {
-    return this.roomState.get(roomId) ?? [];
+  getRoomState(roomId: string): Promise<Record<string, unknown>[]> {
+    return Promise.resolve(this.roomState.get(roomId) ?? []);
   }
 
   lastSentText(): string | undefined {
@@ -45,15 +45,16 @@ export class MockMatrixClient implements MatrixClientLike {
 export class MemoryStorage implements Storage {
   data: Map<string, unknown> = new Map();
 
-  async get<T>(key: string): Promise<T | undefined> {
-    return this.data.get(key) as T | undefined;
+  get<T>(key: string): Promise<T | undefined> {
+    return Promise.resolve(this.data.get(key) as T | undefined);
   }
 
-  async set<T>(key: string, value: T): Promise<void> {
+  set<T>(key: string, value: T): Promise<void> {
     this.data.set(key, value);
+    return Promise.resolve();
   }
 
-  async update<T>(
+  update<T>(
     key: string,
     updater: (current: T) => T,
     defaultValue: T,
@@ -61,11 +62,11 @@ export class MemoryStorage implements Storage {
     const current = (this.data.get(key) as T | undefined) ?? defaultValue;
     const next = updater(current);
     this.data.set(key, next);
-    return next;
+    return Promise.resolve(next);
   }
 
-  async flush(): Promise<void> {
-    // no-op
+  flush(): Promise<void> {
+    return Promise.resolve();
   }
 }
 

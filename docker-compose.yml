@@ -1,23 +1,11 @@
 services:
   bot:
-    build: .
+    image: ghcr.io/tjallo/matrix-bot-js:latest
     container_name: matrix-bot
     restart: unless-stopped
     env_file: .env
     volumes:
       - bot-data:/data
-    develop:
-      watch:
-        # Rebuild image when deps change
-        - action: rebuild
-          path: deno.json
-        - action: rebuild
-          path: deno.lock
-        # Rebuild when source changes
-        - action: rebuild
-          path: main.ts
-        - action: rebuild
-          path: src/
 
 volumes:
   bot-data:
