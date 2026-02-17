@@ -24,7 +24,7 @@ Deno.test("integration: !ping responds with Pong!", async () => {
   const { client, bot } = setup();
   const event = makeTextEvent("@alice:matrix.test", "!ping");
   await bot.handleMessage("!room:test", event);
-  assertEquals(client.lastSentText(), "Pong!");
+  assertEquals(client.lastSentText(), "🏓 Pong!");
 });
 
 Deno.test("integration: ignores messages from the bot itself", async () => {
@@ -64,7 +64,7 @@ Deno.test("integration: custom prefix works", async () => {
   const { client, bot } = setup({ prefix: "bot:" });
   const event = makeTextEvent("@alice:matrix.test", "bot:ping");
   await bot.handleMessage("!room:test", event);
-  assertEquals(client.lastSentText(), "Pong!");
+  assertEquals(client.lastSentText(), "🏓 Pong!");
 });
 
 Deno.test("integration: !echo sends back the text", async () => {
@@ -175,7 +175,7 @@ Deno.test("integration: multiple rooms are independent", async () => {
 
   assertEquals(client.sent.length, 2);
   assertEquals(client.sent[0].roomId, "!room1:test");
-  assertEquals(client.sent[0].text, "Pong!");
+  assertEquals(client.sent[0].text, "🏓 Pong!");
   assertEquals(client.sent[1].roomId, "!room2:test");
   assertEquals(client.sent[1].text, "hi");
 });

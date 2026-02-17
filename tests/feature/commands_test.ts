@@ -41,7 +41,7 @@ Deno.test("ping: responds with Pong!", async () => {
   const ctx = makeCtx();
   const def = ctx.registry.get("ping")!;
   await def.handler(ctx);
-  assertEquals((ctx.client as MockMatrixClient).lastSentText(), "Pong!");
+  assertEquals((ctx.client as MockMatrixClient).lastSentText(), "🏓 Pong!");
 });
 
 // -----------------------------------------------------------------------
@@ -130,13 +130,14 @@ Deno.test("roll: shows usage for invalid spec", async () => {
 // !whoami
 // -----------------------------------------------------------------------
 
-Deno.test("whoami: shows sender and bot version", async () => {
+Deno.test("whoami: shows sender, version and github link", async () => {
   const ctx = makeCtx();
   const def = ctx.registry.get("whoami")!;
   await def.handler(ctx);
   const text = (ctx.client as MockMatrixClient).lastSentText()!;
   assertStringIncludes(text, "@user:matrix.test");
   assertStringIncludes(text, "Bot version:");
+  assertStringIncludes(text, "github.com/tjallo/matrix-bot-js");
   assertEquals(text.includes("@bot:matrix.test"), false);
   assertEquals(text.includes("Device ID"), false);
 });
