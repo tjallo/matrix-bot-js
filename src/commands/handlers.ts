@@ -38,12 +38,14 @@ async function isRoomEncrypted(ctx: CommandContext): Promise<boolean> {
   }
 }
 
+const REPO_URL = "https://github.com/tjallo/matrix-bot-js";
+
 export function createCommandRegistry(): CommandRegistry {
   const registry = new CommandRegistry();
 
   registry.register({
     name: "help",
-    summary: "List commands or get help for one",
+    summary: "📋 List commands or get help for one",
     usage: "help [command]",
     handler: async (ctx: CommandContext) => {
       const query = ctx.args[0]?.toLowerCase();
@@ -52,7 +54,7 @@ export function createCommandRegistry(): CommandRegistry {
         if (!def) {
           await ctx.client.sendText(
             ctx.roomId,
-            `Unknown command: ${query}. Try ${ctx.config.prefix}help`,
+            `❓ Unknown command: ${query}. Try ${ctx.config.prefix}help`,
           );
           return;
         }
@@ -71,22 +73,22 @@ export function createCommandRegistry(): CommandRegistry {
       );
       await ctx.client.sendText(
         ctx.roomId,
-        `Commands:\n${lines.join("\n")}`,
+        `📋 Commands:\n${lines.join("\n")}`,
       );
     },
   });
 
   registry.register({
     name: "ping",
-    summary: "Check bot responsiveness",
+    summary: "🏓 Check bot responsiveness",
     handler: async (ctx: CommandContext) => {
-      await ctx.client.sendText(ctx.roomId, "Pong!");
+      await ctx.client.sendText(ctx.roomId, "🏓 Pong!");
     },
   });
 
   registry.register({
     name: "echo",
-    summary: "Echo back text",
+    summary: "🔊 Echo back text",
     usage: "echo <text>",
     handler: async (ctx: CommandContext) => {
       if (!ctx.rawArgs) {
@@ -102,27 +104,27 @@ export function createCommandRegistry(): CommandRegistry {
 
   registry.register({
     name: "time",
-    summary: "Show server time",
+    summary: "🕐 Show server time",
     handler: async (ctx: CommandContext) => {
       await ctx.client.sendText(
         ctx.roomId,
-        `Server time: ${ctx.now.toISOString()}`,
+        `🕐 Server time: ${ctx.now.toISOString()}`,
       );
     },
   });
 
   registry.register({
     name: "uptime",
-    summary: "Show bot uptime",
+    summary: "⏱️ Show bot uptime",
     handler: async (ctx: CommandContext) => {
       const uptime = formatDurationMs(ctx.now.getTime() - ctx.startTime.getTime());
-      await ctx.client.sendText(ctx.roomId, `Uptime: ${uptime}`);
+      await ctx.client.sendText(ctx.roomId, `⏱️ Uptime: ${uptime}`);
     },
   });
 
   registry.register({
     name: "roll",
-    summary: "Roll dice (NdM)",
+    summary: "🎲 Roll dice (NdM)",
     usage: "roll [NdM]",
     handler: async (ctx: CommandContext) => {
       const spec = parseDiceSpec(ctx.args[0]);
@@ -139,25 +141,25 @@ export function createCommandRegistry(): CommandRegistry {
       const total = rolls.reduce((sum, value) => sum + value, 0);
       await ctx.client.sendText(
         ctx.roomId,
-        `Rolled ${spec.count}d${spec.sides}: ${rolls.join(", ")} (total ${total})`,
+        `🎲 Rolled ${spec.count}d${spec.sides}: ${rolls.join(", ")} (total ${total})`,
       );
     },
   });
 
   registry.register({
     name: "whoami",
-    summary: "Show your Matrix user ID",
+    summary: "👤 Show your Matrix user ID",
     handler: async (ctx: CommandContext) => {
       await ctx.client.sendText(
         ctx.roomId,
-        `You are ${ctx.sender}\nBot version: ${VERSION}`,
+        `👤 You are ${ctx.sender}\n🤖 Bot version: ${VERSION}\n🔗 ${REPO_URL}`,
       );
     },
   });
 
   registry.register({
     name: "roominfo",
-    summary: "Show room name and member count",
+    summary: "🏠 Show room name and member count",
     handler: async (ctx: CommandContext) => {
       let roomName = "(unknown)";
       try {
@@ -187,30 +189,30 @@ export function createCommandRegistry(): CommandRegistry {
 
       const encrypted = await isRoomEncrypted(ctx);
       const memberText = memberCount === null
-        ? "Members: (unavailable)"
-        : `Members: ${memberCount}`;
+        ? "👥 Members: (unavailable)"
+        : `👥 Members: ${memberCount}`;
       await ctx.client.sendText(
         ctx.roomId,
-        `Room: ${roomName}\nRoom ID: ${ctx.roomId}\n${memberText}\nEncrypted: ${encrypted ? "yes" : "no"}`,
+        `🏠 Room: ${roomName}\n🆔 Room ID: ${ctx.roomId}\n${memberText}\n${encrypted ? "🔒 Encrypted: yes" : "🔓 Encrypted: no"}`,
       );
     },
   });
 
   registry.register({
     name: "encryptstatus",
-    summary: "Check if room encryption is enabled",
+    summary: "🔐 Check if room encryption is enabled",
     handler: async (ctx: CommandContext) => {
       const encrypted = await isRoomEncrypted(ctx);
       await ctx.client.sendText(
         ctx.roomId,
-        `Encryption: ${encrypted ? "enabled" : "disabled"}`,
+        encrypted ? "🔒 Encryption: enabled" : "🔓 Encryption: disabled",
       );
     },
   });
 
   registry.register({
     name: "stats",
-    summary: "Show command usage stats",
+    summary: "📊 Show command usage stats",
     handler: async (ctx: CommandContext) => {
       const stats = await getStats(ctx.storage);
       const top = (Object.entries(stats.byCommand) as Array<[string, number]>)
@@ -220,14 +222,14 @@ export function createCommandRegistry(): CommandRegistry {
         .join(", ");
       await ctx.client.sendText(
         ctx.roomId,
-        `Commands run: ${stats.totalCommands}\nLast command: ${stats.lastCommandAt ?? "n/a"}\nTop: ${top || "n/a"}`,
+        `📊 Commands run: ${stats.totalCommands}\n⏰ Last command: ${stats.lastCommandAt ?? "n/a"}\n🔝 Top: ${top || "n/a"}`,
       );
     },
   });
 
   registry.register({
     name: "suggest",
-    summary: "Suggest a feature for the bot",
+    summary: "💡 Suggest a feature for the bot",
     usage: "suggest <your idea>",
     handler: async (ctx: CommandContext) => {
       if (!ctx.rawArgs) {
@@ -246,20 +248,20 @@ export function createCommandRegistry(): CommandRegistry {
       );
       await ctx.client.sendText(
         ctx.roomId,
-        `Suggestion #${suggestion.id} recorded. Thanks!`,
+        `💡 Suggestion #${suggestion.id} recorded. Thanks!`,
       );
     },
   });
 
   registry.register({
     name: "suggestions",
-    summary: "List feature suggestions",
+    summary: "📝 List feature suggestions",
     handler: async (ctx: CommandContext) => {
       const items = await getSuggestions(ctx.storage);
       if (items.length === 0) {
         await ctx.client.sendText(
           ctx.roomId,
-          `No suggestions yet. Use ${ctx.config.prefix}suggest <idea> to add one.`,
+          `📝 No suggestions yet. Use ${ctx.config.prefix}suggest <idea> to add one.`,
         );
         return;
       }
@@ -268,18 +270,18 @@ export function createCommandRegistry(): CommandRegistry {
       );
       await ctx.client.sendText(
         ctx.roomId,
-        `Suggestions (${items.length}):\n${lines.join("\n")}`,
+        `📝 Suggestions (${items.length}):\n${lines.join("\n")}`,
       );
     },
   });
 
   registry.register({
     name: "version",
-    summary: "Show bot and runtime versions",
+    summary: "ℹ️ Show bot and runtime versions",
     handler: async (ctx: CommandContext) => {
       await ctx.client.sendText(
         ctx.roomId,
-        `Bot: ${VERSION}\nDeno: ${Deno.version.deno}\nV8: ${Deno.version.v8}\nTypeScript: ${Deno.version.typescript}`,
+        `ℹ️ Bot: ${VERSION}\n🦕 Deno: ${Deno.version.deno}\n⚙️ V8: ${Deno.version.v8}\n📘 TypeScript: ${Deno.version.typescript}`,
       );
     },
   });
