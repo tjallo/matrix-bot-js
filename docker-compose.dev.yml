@@ -1,0 +1,39 @@
+services:
+  bot:
+    image: denoland/deno:2.1.4
+    container_name: matrix-bot-dev
+    working_dir: /app
+    entrypoint: ["sh", "-c", "deno install && exec deno run --watch --allow-net --allow-env --allow-read --allow-write main.ts"]
+    env_file: .env
+    environment:
+      - BOT_DATA_DIR=/data
+      - BOT_LOG_LEVEL=debug
+    volumes:
+      - .:/app
+      - dev-data:/data
+    develop:
+      watch:
+        # Sync source changes into the container (Deno --watch picks them up)
+        - action: sync
+          path: ./src
+          target: /app/src
+        - action: sync
+          path: ./main.ts
+          target: /app/main.ts
+        # Reinstall deps when deno.json changes
+        - action: rebuild
+          path: deno.json
+        - action: rebuild
+          path: deno.lock
+
+  test:
+    image: denoland/deno:2.1.4
+    container_name: matrix-bot-test
+    working_dir: /app
+    profiles: ["test"]
+    entrypoint: ["sh", "-c", "deno install && exec deno test --allow-all"]
+    volumes:
+      - .:/app
+
+volumes:
+  dev-data:

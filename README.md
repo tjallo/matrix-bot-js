@@ -107,6 +107,45 @@ deno task start
 
 ## Docker
 
+### Production
+
+Uses `docker-compose.yml`. Builds the image, runs the bot with a named volume for persistent data, and restarts automatically.
+
+```bash
+# Start
+docker compose up -d
+
+# Watch mode -- auto-rebuilds and restarts the container when source files change
+docker compose watch
+
+# Stop
+docker compose down
+```
+
+`docker compose watch` monitors `main.ts`, `src/`, `deno.json`, and `deno.lock`. When any of these change it rebuilds the image and restarts the container. Data in `/data` is preserved across rebuilds.
+
+### Development
+
+Uses `docker-compose.dev.yml`. Mounts your source directory into the container so edits are reflected immediately. Two layers of auto-reload:
+
+1. **Deno `--watch`** -- restarts the process inside the container when `.ts` files change (instant, no rebuild).
+2. **Compose `watch`** -- syncs source changes into the container and rebuilds only when `deno.json`/`deno.lock` change (dependency updates).
+
+```bash
+# Start with live reload
+docker compose -f docker-compose.dev.yml up
+
+# Or with compose watch (handles dep changes too)
+docker compose -f docker-compose.dev.yml watch
+
+# Run tests in a container
+docker compose -f docker-compose.dev.yml run --rm test
+```
+
+Log level defaults to `debug` in dev mode.
+
+### Standalone Docker (no compose)
+
 ```bash
 docker build -t matrix-bot .
 
@@ -116,6 +155,8 @@ docker run -d \
   --env-file .env \
   matrix-bot
 ```
+
+### Persistent data
 
 The `/data` volume persists:
 - `crypto/` -- E2EE device keys (SQLite). **Back this up.** If lost, you need a new access token.
@@ -203,6 +244,8 @@ All tests use mocked clients and in-memory storage -- no homeserver needed.
 │   ├── feature/                  # Handler tests
 │   └── integration/              # End-to-end flow tests
 ├── Dockerfile
+├── docker-compose.yml            # Production
+├── docker-compose.dev.yml        # Dev (watch + test)
 ├── .env.example
 └── deno.json
 ```
