@@ -25,20 +25,22 @@ function isOtkConflict(err: unknown): boolean {
  * Try to delete the current device from the server so Synapse forgets
  * its stale one-time keys. We try the Synapse admin API first (no UIA
  * required), then fall back to the client API with empty auth.
+ *
+ * Returns true if the device was successfully deleted, false otherwise.
  */
 async function deleteDeviceOnServer(
   client: MatrixClient,
   userId: string,
-): Promise<void> {
+): Promise<boolean> {
   let deviceId: string | undefined;
   try {
     const whoami = await client.getWhoAmI();
     deviceId = whoami.device_id;
   } catch {
     console.warn("Could not determine device ID from /whoami, skipping device deletion.");
-    return;
+    return false;
   }
-  if (!deviceId) return;
+  if (!deviceId) return false;
 
   console.warn(`Attempting to delete device ${deviceId} from server...`);
 
@@ -49,7 +51,7 @@ async function deleteDeviceOnServer(
       `/_synapse/admin/v2/users/${encodeURIComponent(userId)}/devices/${encodeURIComponent(deviceId)}`,
     );
     console.warn(`Device ${deviceId} deleted via Synapse admin API.`);
-    return;
+    return true;
   } catch {
     console.warn("Synapse admin API device deletion failed, trying client API...");
   }
@@ -63,11 +65,9 @@ async function deleteDeviceOnServer(
       { auth: {} },
     );
     console.warn(`Device ${deviceId} deleted via client API.`);
+    return true;
   } catch {
-    console.warn(
-      `Could not delete device ${deviceId} from server. ` +
-      "You may need to delete it manually via Synapse admin or Element.",
-    );
+    return false;
   }
 }
 
@@ -162,9 +162,37 @@ async function main(): Promise<void> {
       "One-time key conflict detected — local crypto store is out of sync with homeserver.",
     );
 
-    // Delete the stale device from the server so its old keys are purged,
-    // then wipe all local state and retry with a completely fresh device.
-    await deleteDeviceOnServer(client, config.userId);
+    // Try to delete the stale device from the server so its old keys are
+    // purged, then wipe all local state and retry with a fresh device.
+    const deleted = await deleteDeviceOnServer(client, config.userId);
+
+    if (!deleted) {
+      // We cannot recover automatically — the device's stale keys are stuck
+      // on the server and the access token is permanently bound to this
+      // device ID.  Print actionable instructions and exit cleanly so
+      // Docker does not endlessly restart the container.
+      console.error(
+        "\n" +
+        "=== MANUAL INTERVENTION REQUIRED ===\n" +
+        "The server has stale encryption keys for this device that the bot cannot delete.\n" +
+        "The access token is bound to this device ID, so wiping local state alone will not help.\n" +
+        "\n" +
+        "Fix this with ONE of the following:\n" +
+        "\n" +
+        "  1. Delete the device via the Synapse admin API (from a server-admin account):\n" +
+        "     curl -X DELETE \\\n" +
+        `       '${config.homeserverUrl}/_synapse/admin/v2/users/${encodeURIComponent(config.userId)}/devices/NPNQESXJNZ' \\\n` +
+        "       -H 'Authorization: Bearer <ADMIN_TOKEN>'\n" +
+        "\n" +
+        "  2. Log in again to get a new access token (with a fresh device ID)\n" +
+        "     and update MATRIX_ACCESS_TOKEN in your .env file.\n" +
+        "\n" +
+        "  3. Make the bot user a Synapse server admin so it can self-heal.\n" +
+        "=== END ===\n",
+      );
+      Deno.exit(1);
+    }
+
     await wipeLocalState(config);
 
     client = createMatrixClient(config);
