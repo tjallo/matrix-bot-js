@@ -3,6 +3,7 @@
 *.swp
 *.symcache
 .env
+/data/
 
 /.cargo_home/
 /.idea/
