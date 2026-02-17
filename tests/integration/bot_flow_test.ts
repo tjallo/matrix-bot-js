@@ -147,8 +147,8 @@ Deno.test("integration: handler error produces error message", async () => {
   bot.registry.register({
     name: "explode",
     summary: "always fails",
-    handler: async () => {
-      throw new Error("boom");
+    handler: () => {
+      return Promise.reject(new Error("boom"));
     },
   });
 

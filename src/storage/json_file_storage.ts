@@ -31,8 +31,8 @@ export class JsonFileStorage implements Storage {
     }
   }
 
-  async get<T>(key: string): Promise<T | undefined> {
-    return this.#data[key] as T | undefined;
+  get<T>(key: string): Promise<T | undefined> {
+    return Promise.resolve(this.#data[key] as T | undefined);
   }
 
   async set<T>(key: string, value: T): Promise<void> {
