@@ -2,6 +2,7 @@ import { CommandRegistry } from "./registry.ts";
 import type { CommandContext } from "./types.ts";
 import { formatDurationMs } from "../services/format.ts";
 import { getStats } from "../services/stats.ts";
+import { VERSION } from "../version.ts";
 
 type DiceSpec = {
   count: number;
@@ -148,7 +149,7 @@ export function createCommandRegistry(): CommandRegistry {
     handler: async (ctx: CommandContext) => {
       await ctx.client.sendText(
         ctx.roomId,
-        `You are ${ctx.sender}`,
+        `You are ${ctx.sender}\nBot version: ${VERSION}`,
       );
     },
   });
@@ -225,11 +226,11 @@ export function createCommandRegistry(): CommandRegistry {
 
   registry.register({
     name: "version",
-    summary: "Show runtime versions",
+    summary: "Show bot and runtime versions",
     handler: async (ctx: CommandContext) => {
       await ctx.client.sendText(
         ctx.roomId,
-        `Deno: ${Deno.version.deno}\nV8: ${Deno.version.v8}\nTypeScript: ${Deno.version.typescript}`,
+        `Bot: ${VERSION}\nDeno: ${Deno.version.deno}\nV8: ${Deno.version.v8}\nTypeScript: ${Deno.version.typescript}`,
       );
     },
   });

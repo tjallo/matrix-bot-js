@@ -130,12 +130,13 @@ Deno.test("roll: shows usage for invalid spec", async () => {
 // !whoami
 // -----------------------------------------------------------------------
 
-Deno.test("whoami: shows sender ID only", async () => {
+Deno.test("whoami: shows sender and bot version", async () => {
   const ctx = makeCtx();
   const def = ctx.registry.get("whoami")!;
   await def.handler(ctx);
   const text = (ctx.client as MockMatrixClient).lastSentText()!;
   assertStringIncludes(text, "@user:matrix.test");
+  assertStringIncludes(text, "Bot version:");
   assertEquals(text.includes("@bot:matrix.test"), false);
   assertEquals(text.includes("Device ID"), false);
 });
@@ -245,12 +246,11 @@ Deno.test("stats: shows usage stats", async () => {
 // !version
 // -----------------------------------------------------------------------
 
-Deno.test("version: includes Deno version", async () => {
+Deno.test("version: includes bot and Deno version", async () => {
   const ctx = makeCtx();
   const def = ctx.registry.get("version")!;
   await def.handler(ctx);
-  assertStringIncludes(
-    (ctx.client as MockMatrixClient).lastSentText()!,
-    `Deno: ${Deno.version.deno}`,
-  );
+  const text = (ctx.client as MockMatrixClient).lastSentText()!;
+  assertStringIncludes(text, "Bot:");
+  assertStringIncludes(text, `Deno: ${Deno.version.deno}`);
 });

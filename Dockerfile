@@ -2,6 +2,12 @@ FROM denoland/deno:2.6.10
 
 WORKDIR /app
 
+ARG VERSION=dev
+
+LABEL org.opencontainers.image.source="https://github.com/tjallo/matrix-bot-js"
+LABEL org.opencontainers.image.description="Encrypted Matrix bot built with Deno"
+LABEL org.opencontainers.image.version="${VERSION}"
+
 # Copy dependency files first to leverage Docker cache
 COPY deno.json deno.lock* ./
 

@@ -229,6 +229,7 @@ All tests use mocked clients and in-memory storage -- no homeserver needed.
 ```
 ├── main.ts                       # Entrypoint
 ├── src/
+│   ├── version.ts                # Single source of truth for version
 │   ├── config.ts                 # Env config parsing
 │   ├── bot.ts                    # Bot core (dispatch, error handling)
 │   ├── matrix/
@@ -253,6 +254,35 @@ All tests use mocked clients and in-memory storage -- no homeserver needed.
 ├── Dockerfile
 ├── docker-compose.yml            # Production
 ├── docker-compose.dev.yml        # Dev (watch + test)
+├── .github/workflows/
+│   ├── ci.yml                    # Lint, check, test on push/PR
+│   └── release.yml               # Build & push GHCR image on tag
 ├── .env.example
 └── deno.json
+```
+
+## Releasing
+
+This project follows a git-flow-like release process. When you push a semver tag to `main`, GitHub Actions builds and pushes a Docker image to GHCR.
+
+### Release workflow
+
+```bash
+# 1. Update the version in src/version.ts
+# 2. Commit and merge to main
+# 3. Tag and push
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+This triggers `.github/workflows/release.yml` which:
+1. Runs the full test suite
+2. Builds the Docker image
+3. Pushes to `ghcr.io/tjallo/matrix-bot-js` with tags: `0.1.0`, `0.1`, `0`, `latest`
+
+### Pulling the image
+
+```bash
+docker pull ghcr.io/tjallo/matrix-bot-js:latest
+docker pull ghcr.io/tjallo/matrix-bot-js:0.1.0
 ```
