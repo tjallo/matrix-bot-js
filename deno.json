@@ -1,5 +1,5 @@
 {
-  "version": "1.2.1",
+  "version": "1.2.2",
   "nodeModulesDir": "auto",
   "tasks": {
     "setup": "deno install --allow-scripts=npm:@matrix-org/matrix-sdk-crypto-nodejs@0.4.0",
